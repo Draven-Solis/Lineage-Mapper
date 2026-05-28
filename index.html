@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pedigree Simulator</title>
+<title>Heritrix: Pedigree Simulator</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,10 +26,12 @@
   --shadow-lg: 0 16px 48px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.35);
   --cc: #a78bfa;
 }
+
 body {
   background: var(--bg); color: var(--text);
   font-family: 'IBM Plex Sans', system-ui, sans-serif;
-  min-height: 100vh; overflow-x: hidden;
+  min-height: 100vh;
+  transition: background .3s ease, color .3s ease;
 }
 .app { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
 header {
@@ -43,6 +45,7 @@ header {
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   line-height: 1.15;
 }
+
 .subtitle { font-size: .68rem; color: var(--text-faint); margin-top: 7px; letter-spacing: .18em; text-transform: uppercase; font-weight: 500; }
 
 /* CONTROLS */
@@ -83,8 +86,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: 
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; padding: 24px 16px 24px 20px;
   position: relative; box-shadow: var(--shadow-sm);
+  overflow-x: auto;
 }
-.chart-inner { position: relative; width: 100%; min-height: 360px; }
+.chart-inner { position: relative; width: 100%; min-height: 360px; min-width: 420px; }
 svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 
 /* GEN ROWS */
@@ -108,6 +112,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
   stroke-linejoin: round;
   pointer-events: none;
 }
+
 @keyframes pulseAffected {
   0%,100% { filter: drop-shadow(0 0 3px currentColor); }
   50%      { filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor); }
@@ -142,6 +147,9 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
   box-shadow: var(--shadow-md); opacity: 0; transition: opacity .12s ease; transform: translate(-50%,-115%);
 }
 .genotype-tooltip.vis { opacity: 1; }
+/* Genotype superscripts */
+.tt-gt sup, .modal-gt-val sup, .cc-punnett-cell sup,
+.cc-prob-lbl sup, .cc-gt-btn sup { font-size: .65em; vertical-align: super; line-height: 0; }
 .tt-gt { font-size: 1rem; font-weight: 600; font-family: 'IBM Plex Mono', monospace; color: var(--text); }
 .tt-lbl { font-size: .68rem; color: var(--text-dim); margin-top: 2px; }
 
@@ -164,8 +172,8 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
 
 /* PROB PANEL */
 .prob-panel { margin-bottom: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; }
-.prob-title { font-family: 'IBM Plex Mono', monospace; font-size: .52rem; color: var(--text-faint); letter-spacing: .08em; margin-bottom: 7px; text-transform: uppercase; }
-.prob-mating { font-size: .69rem; color: var(--text-dim); margin-bottom: 8px; font-style: italic; font-family: 'IBM Plex Mono', monospace; }
+.prob-title { font-family: 'IBM Plex Mono', monospace; font-size: .52rem; color: var(--text-dim); letter-spacing: .08em; margin-bottom: 7px; text-transform: uppercase; }
+.prob-mating { font-size: .69rem; color: var(--text); margin-bottom: 8px; font-style: italic; font-family: 'IBM Plex Mono', monospace; opacity: .7; }
 .prob-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
 .prob-bar-wrap { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .prob-bar { height: 100%; border-radius: 2px; transition: width .7s ease; width: 0%; }
@@ -328,6 +336,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
 .cc-prob-bar.unaffected-bar { background: var(--text-faint); }
 .cc-prob-pct { font-family: 'IBM Plex Mono', monospace; font-size: .57rem; color: var(--text); width: 28px; text-align: right; }
 .cc-prob-lbl { font-size: .68rem; color: var(--text-dim); width: 140px; }
+.cc-hint { font-family: 'IBM Plex Sans', sans-serif; font-size: .68rem; color: var(--text-faint); margin-top: 8px; line-height: 1.5; }
 
 .cc-apply-btn {
   margin-top: 12px; width: 100%; padding: 8px 14px;
@@ -335,15 +344,25 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
   background: rgba(167,139,250,.15); border: 1px solid #a78bfa; color: #a78bfa;
   border-radius: 6px; cursor: pointer; transition: all .15s ease; letter-spacing: .01em;
 }
-.cc-apply-btn:hover { background: rgba(167,139,250,.28); }
-.cc-apply-btn:disabled { opacity: .35; cursor: not-allowed; }
-.cc-hint { font-size: .64rem; color: var(--text-faint); text-align: center; margin-top: 6px; }
+
+
+
+
+
+
+
+/* Dark mode default: moon on LEFT (thumb at left) */
+
+/* Light mode: sun on RIGHT */
+
+
 </style>
 </head>
 <body>
+
 <div class="app">
   <header>
-    <div class="title"><span style="-webkit-text-fill-color:initial;margin-right:8px;font-size:0.85em;">🧬</span>Pedigree Simulator</div>
+    <div class="title"><span style="-webkit-text-fill-color:initial;margin-right:8px;font-size:0.85em;">🧬</span>Heritrix: Pedigree Simulator</div>
     <div class="subtitle">Mendelian Inheritance &nbsp;·&nbsp; Interactive Learning Tool</div>
   </header>
 
@@ -362,7 +381,6 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
     <span class="slabel">SPEED</span>
     <input type="range" id="speed-slider" min="0.25" max="3" step="0.25" value="1" oninput="onSpeedChange(this.value)">
     <span class="sval" id="speed-val">1×</span>
-    <span class="slabel" style="margin-left:14px">STEP</span>
   </div>
 
   <!-- CUSTOM CROSS PANEL -->
@@ -410,7 +428,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
       <div id="cc-probs-gen3"></div>
     <button class="cc-apply-btn" id="cc-apply-btn" onclick="applyCCToChart()">Apply to Pedigree Chart ↓</button>
       <button class="cc-apply-btn" id="cc-reroll-btn" onclick="rerollCCChart()" style="display:none;margin-top:6px;background:rgba(167,139,250,.07);font-weight:400;font-size:.68rem;">🎲 Re-roll offspring (randomise again)</button>
-      <div class="cc-hint">Offspring are assigned by probability weight — deterministic each apply. Use Re-roll to sample new outcomes.</div>
+      <div class="cc-hint">Tap Re-roll to see a different random outcome each time.</div>
     </div>
   </div>
 
@@ -443,7 +461,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
             <div class="gen-row-label" style="opacity:0">GEN I</div>
             <svg class="person-symbol" id="p1_2" viewBox="0 0 46 46" onclick="inspectPerson('p1_2')" role="button" tabindex="0" aria-label="Inspect I-2 Grandmother">
               <circle class="sym-shape" cx="23" cy="23" r="19" fill="#2a2a28" stroke="#4a4a46" stroke-width="2"/>
-              <path class="sym-carrier-fill" id="p1_2-carrier" d="M23,4 A19,19 0 0,1 42,23 L23,23 Z" fill="none"/>
+              <path class="sym-carrier-fill" id="p1_2-carrier" d="M23,4 A19,19 0 0,1 23,42 L23,23 Z" fill="none"/>
               <g class="sym-gender-icon"><circle cx="23" cy="18" r="7.5"/><line x1="23" y1="25.5" x2="23" y2="35"/><line x1="18" y1="30.5" x2="28" y2="30.5"/></g>
             </svg>
             <div class="person-name">Grandmother</div>
@@ -474,7 +492,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
             <div class="gen-row-label" style="opacity:0">GEN II</div>
             <svg class="person-symbol" id="p2_4" viewBox="0 0 46 46" onclick="inspectPerson('p2_4')" role="button" tabindex="0" aria-label="Inspect II-4 Daughter">
               <circle class="sym-shape" cx="23" cy="23" r="19" fill="#2a2a28" stroke="#4a4a46" stroke-width="2"/>
-              <path class="sym-carrier-fill" id="p2_4-carrier" d="M23,4 A19,19 0 0,1 42,23 L23,23 Z" fill="none"/>
+              <path class="sym-carrier-fill" id="p2_4-carrier" d="M23,4 A19,19 0 0,1 23,42 L23,23 Z" fill="none"/>
               <g class="sym-gender-icon"><circle cx="23" cy="18" r="7.5"/><line x1="23" y1="25.5" x2="23" y2="35"/><line x1="18" y1="30.5" x2="28" y2="30.5"/></g>
             </svg>
             <div class="person-name">Daughter</div>
@@ -483,7 +501,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
             <div class="gen-row-label" style="opacity:0">GEN II</div>
             <svg class="person-symbol" id="p2_2" viewBox="0 0 46 46" onclick="inspectPerson('p2_2')" role="button" tabindex="0" aria-label="Inspect II-2 Daughter">
               <circle class="sym-shape" cx="23" cy="23" r="19" fill="#2a2a28" stroke="#4a4a46" stroke-width="2"/>
-              <path class="sym-carrier-fill" id="p2_2-carrier" d="M23,4 A19,19 0 0,1 42,23 L23,23 Z" fill="none"/>
+              <path class="sym-carrier-fill" id="p2_2-carrier" d="M23,4 A19,19 0 0,1 23,42 L23,23 Z" fill="none"/>
               <g class="sym-gender-icon"><circle cx="23" cy="18" r="7.5"/><line x1="23" y1="25.5" x2="23" y2="35"/><line x1="18" y1="30.5" x2="28" y2="30.5"/></g>
             </svg>
             <div class="person-name">Daughter</div>
@@ -523,7 +541,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
             <div class="gen-row-label" style="opacity:0">GEN III</div>
             <svg class="person-symbol" id="p3_2" viewBox="0 0 46 46" onclick="inspectPerson('p3_2')" role="button" tabindex="0" aria-label="Inspect III-2 Granddaughter">
               <circle class="sym-shape" cx="23" cy="23" r="19" fill="#2a2a28" stroke="#4a4a46" stroke-width="2"/>
-              <path class="sym-carrier-fill" id="p3_2-carrier" d="M23,4 A19,19 0 0,1 42,23 L23,23 Z" fill="none"/>
+              <path class="sym-carrier-fill" id="p3_2-carrier" d="M23,4 A19,19 0 0,1 23,42 L23,23 Z" fill="none"/>
               <g class="sym-gender-icon"><circle cx="23" cy="18" r="7.5"/><line x1="23" y1="25.5" x2="23" y2="35"/><line x1="18" y1="30.5" x2="28" y2="30.5"/></g>
             </svg>
             <div class="person-name">Granddaughter</div>
@@ -532,7 +550,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
             <div class="gen-row-label" style="opacity:0">GEN III</div>
             <svg class="person-symbol" id="p3_4" viewBox="0 0 46 46" onclick="inspectPerson('p3_4')" role="button" tabindex="0" aria-label="Inspect III-4 Granddaughter">
               <circle class="sym-shape" cx="23" cy="23" r="19" fill="#2a2a28" stroke="#4a4a46" stroke-width="2"/>
-              <path class="sym-carrier-fill" id="p3_4-carrier" d="M23,4 A19,19 0 0,1 42,23 L23,23 Z" fill="none"/>
+              <path class="sym-carrier-fill" id="p3_4-carrier" d="M23,4 A19,19 0 0,1 23,42 L23,23 Z" fill="none"/>
               <g class="sym-gender-icon"><circle cx="23" cy="18" r="7.5"/><line x1="23" y1="25.5" x2="23" y2="35"/><line x1="18" y1="30.5" x2="28" y2="30.5"/></g>
             </svg>
             <div class="person-name">Granddaughter</div>
@@ -581,7 +599,7 @@ svg#pedigree-lines { position: absolute; top: 0; left: 0; width: 100%; height: 1
         <div class="kbd-item"><span class="kbd">1–4</span> Mode</div>
         <div class="kbd-item"><span class="kbd">R</span> Reset</div>
         <div class="kbd-item"><span class="kbd">P</span> Pause</div>
-        <div class="kbd-item"><span class="kbd">S</span> Step</div>
+        <div class="kbd-item"><span class="kbd">C</span> Custom</div>
         <div class="click-hint">💡 Click any symbol to inspect genotype &amp; explanation</div>
       </div>
     </div>
@@ -667,40 +685,40 @@ const MODES = {
     color:'#67e8f9', icon:'🔵', name:'X-Linked\nRecessive',
     desc:'Males express the trait if they inherit the allele. Females are typically carriers. No male-to-male transmission.',
     affected:['p1_1','p2_3','p3_1'], carriers:['p1_2','p2_2','p2_4','p3_2'],
-    probMating:'XᴀXᵃ (carrier daughter II-2) × XᴀY (unaffected spouse) → Gen III',
-    probs:[{lbl:'Sons affected (XᵃY)',pct:25,type:'affected'},{lbl:'Sons unaffected (XᴀY)',pct:25,type:'unaffected'},{lbl:'Daughters carrier (XᴀXᵃ)',pct:25,type:'carrier'},{lbl:'Daughters normal (XᴀXᴀ)',pct:25,type:'unaffected'}],
+    probMating:'XAXa (carrier daughter II-2) × XAY (unaffected spouse) → Gen III',
+    probs:[{lbl:'Sons affected (XaY)',pct:25,type:'affected'},{lbl:'Sons unaffected (XAY)',pct:25,type:'unaffected'},{lbl:'Daughters carrier (XAXa)',pct:25,type:'carrier'},{lbl:'Daughters normal (XAXA)',pct:25,type:'unaffected'}],
     genotypes:{
-      p1_1:{gt:'XᵃY',status:'Affected',exp:'Grandfather (Gen I) has only one X chromosome, which carries the recessive allele (Xᵃ). Males need just one copy to be affected — he expresses the trait.'},
-      p1_2:{gt:'XᴀXᵃ',status:'Carrier',exp:'Grandmother (Gen I) has a normal X (Xᴀ) and a recessive X (Xᵃ). The dominant allele masks the condition, so she is a phenotypically normal carrier.'},
-      p2_1:{gt:'XᴀY',status:'Unaffected',exp:'Son 1 (Gen II) inherited the normal Xᴀ from his carrier mother and a Y from his affected father. He is unaffected — fathers cannot pass X to sons.'},
-      p2_3:{gt:'XᵃY',status:'Affected',exp:'Son 2 (Gen II) inherited the recessive Xᵃ from his carrier mother and a Y from his father. With only one X chromosome he expresses the trait — he is affected.'},
-      p2_2:{gt:'XᴀXᵃ',status:'Carrier',exp:'Daughter 1 (Gen II) received the recessive Xᵃ from her affected father (his only X goes to all daughters) and a normal Xᴀ from her mother. She is a carrier.'},
-      p2_4:{gt:'XᴀXᵃ',status:'Carrier',exp:'Daughter 2 (Gen II) also received the recessive Xᵃ from her affected father (XᵃY — all daughters inherit his only X) and a normal Xᴀ from her carrier mother. She is a carrier (XᴀXᵃ).'},
-      spouse:{gt:'XᴀY',status:'Unaffected',exp:'The Spouse has a normal X chromosome (XᴀY) and carries no recessive allele — he is unaffected.'},
-      p3_1:{gt:'XᵃY',status:'Affected',exp:'Grandson 1 (Gen III) inherited the recessive Xᵃ from his carrier mother Daughter 1, and a Y from the Spouse. With only one X chromosome, he expresses the trait.'},
-      p3_3:{gt:'XᴀY',status:'Unaffected',exp:'Grandson 2 (Gen III) inherited the normal Xᴀ from his carrier mother Daughter 1 and a Y from the Spouse — he is unaffected.'},
-      p3_2:{gt:'XᴀXᵃ',status:'Carrier',exp:'Granddaughter 1 (Gen III) inherited the recessive Xᵃ from her carrier mother Daughter 1 and a normal Xᴀ from the Spouse. She is a carrier like her mother.'},
-      p3_4:{gt:'XᴀXᴀ',status:'Unaffected',exp:'Granddaughter 2 (Gen III) inherited a normal Xᴀ from the Spouse and a normal Xᴀ from her carrier mother — she is homozygous normal (XᴀXᴀ) and unaffected.'}
+      p1_1:{gt:'XaY',status:'Affected',exp:'Grandfather (Gen I) has only one X chromosome, which carries the recessive allele (X<sup>a</sup>). Males need just one copy to be affected — he expresses the trait.'},
+      p1_2:{gt:'XAXa',status:'Carrier',exp:'Grandmother (Gen I) has a normal X (X<sup>A</sup>) and a recessive X (X<sup>a</sup>). The dominant allele masks the condition, so she is a phenotypically normal carrier.'},
+      p2_1:{gt:'XAY',status:'Unaffected',exp:'Son 1 (Gen II) inherited the normal X<sup>A</sup> from his carrier mother and a Y from his affected father. He is unaffected — fathers cannot pass X to sons.'},
+      p2_3:{gt:'XaY',status:'Affected',exp:'Son 2 (Gen II) inherited the recessive X<sup>a</sup> from his carrier mother and a Y from his father. With only one X chromosome he expresses the trait — he is affected.'},
+      p2_2:{gt:'XAXa',status:'Carrier',exp:'Daughter 1 (Gen II) received the recessive X<sup>a</sup> from her affected father (his only X goes to all daughters) and a normal X<sup>A</sup> from her mother. She is a carrier.'},
+      p2_4:{gt:'XAXa',status:'Carrier',exp:'Daughter 2 (Gen II) also received the recessive X<sup>a</sup> from her affected father (X<sup>a</sup>Y — all daughters inherit his only X) and a normal X<sup>A</sup> from her carrier mother. She is a carrier.'},
+      spouse:{gt:'XAY',status:'Unaffected',exp:'The Spouse has a normal X chromosome (X<sup>A</sup>Y) and carries no recessive allele — he is unaffected.'},
+      p3_1:{gt:'XaY',status:'Affected',exp:'Grandson 1 (Gen III) inherited the recessive X<sup>a</sup> from his carrier mother Daughter 1, and a Y from the Spouse. With only one X chromosome, he expresses the trait.'},
+      p3_3:{gt:'XAY',status:'Unaffected',exp:'Grandson 2 (Gen III) inherited the normal X<sup>A</sup> from his carrier mother Daughter 1 and a Y from the Spouse — he is unaffected.'},
+      p3_2:{gt:'XAXa',status:'Carrier',exp:'Granddaughter 1 (Gen III) inherited the recessive X<sup>a</sup> from her carrier mother Daughter 1 and a normal X<sup>A</sup> from the Spouse. She is a carrier like her mother.'},
+      p3_4:{gt:'XAXA',status:'Unaffected',exp:'Granddaughter 2 (Gen III) inherited a normal X<sup>A</sup> from the Spouse and a normal X<sup>A</sup> from her carrier mother — she is homozygous normal (X<sup>A</sup>X<sup>A</sup>) and unaffected.'}
     }
   },
   xld: {
     color:'#4ade80', icon:'🟢', name:'X-Linked\nDominant',
     desc:'One copy of the dominant X allele is enough to cause the trait in both sexes. Affected mothers pass it to 50% of sons and daughters. No male-to-male transmission.',
     affected:['p1_1','p2_2','p2_4','p3_3','p3_4'], carriers:[],
-    probMating:'XᴬXᴀ (affected daughter II-2) × XᴀY (unaffected spouse) → Gen III',
-    probs:[{lbl:'Daughters affected (XᴬXᴀ)',pct:25,type:'affected'},{lbl:'Daughters unaffected (XᴀXᴀ)',pct:25,type:'unaffected'},{lbl:'Sons affected (XᴬY)',pct:25,type:'affected'},{lbl:'Sons unaffected (XᴀY)',pct:25,type:'unaffected'}],
+    probMating:'XAXa (affected daughter II-2) × XaY (unaffected spouse) → Gen III',
+    probs:[{lbl:'Daughters affected (XAXa)',pct:25,type:'affected'},{lbl:'Daughters unaffected (XaXa)',pct:25,type:'unaffected'},{lbl:'Sons affected (XAY)',pct:25,type:'affected'},{lbl:'Sons unaffected (XaY)',pct:25,type:'unaffected'}],
     genotypes:{
-      p1_1:{gt:'XᴬY',status:'Affected',exp:'Grandfather (Gen I) carries the dominant allele on his single X chromosome (XᴬY). In X-linked dominant inheritance, one copy in males is sufficient — he is affected.'},
-      p1_2:{gt:'XᴀXᴀ',status:'Unaffected',exp:'Grandmother (Gen I) has two normal X chromosomes (XᴀXᴀ) and does not carry the dominant allele — she is unaffected.'},
-      p2_1:{gt:'XᴀY',status:'Unaffected',exp:'Son 1 (Gen II) inherited a Y from his affected father (not the X), and a normal Xᴀ from his mother. He is unaffected — fathers do not pass X to sons.'},
-      p2_3:{gt:'XᴀY',status:'Unaffected',exp:'Son 2 (Gen II) also inherited a Y from his affected father (not the X) and a normal Xᴀ from his mother — he is unaffected. Fathers in XLD cannot pass X to sons.'},
-      p2_2:{gt:'XᴬXᴀ',status:'Affected',exp:'Daughter 1 (Gen II) received the dominant Xᴬ from her affected father Grandfather. All daughters of an affected father must inherit his X, so she is affected.'},
-      p2_4:{gt:'XᴬXᴀ',status:'Affected',exp:'Daughter 2 (Gen II) also received the dominant Xᴬ from her affected father — all daughters of an affected XLD father are affected.'},
-      spouse:{gt:'XᴀY',status:'Unaffected',exp:'The Spouse is unaffected with a normal X chromosome (XᴀY) — he carries no dominant allele.'},
-      p3_1:{gt:'XᴀY',status:'Unaffected',exp:'Grandson 1 (Gen III) inherited a Y from the Spouse and the normal Xᴀ from his affected mother Daughter 1 (50% chance). He is unaffected.'},
-      p3_3:{gt:'XᴬY',status:'Affected',exp:'Grandson 2 (Gen III) inherited a Y from the Spouse and the dominant Xᴬ from his affected mother Daughter 1 (50% chance). He expresses the trait.'},
-      p3_2:{gt:'XᴀXᴀ',status:'Unaffected',exp:'Granddaughter 1 (Gen III) inherited Xᴀ from the Spouse and the normal Xᴀ from her affected mother (50% chance) — she is homozygous normal and unaffected.'},
-      p3_4:{gt:'XᴬXᴀ',status:'Affected',exp:'Granddaughter 2 (Gen III) inherited Xᴀ from the Spouse and the dominant Xᴬ from her affected mother (50% chance) — she expresses the trait.'}
+      p1_1:{gt:'XAY',status:'Affected',exp:'Grandfather (Gen I) carries the dominant allele on his single X chromosome (X<sup>A</sup>Y). In X-linked dominant inheritance, one copy in males is sufficient — he is affected.'},
+      p1_2:{gt:'XaXa',status:'Unaffected',exp:'Grandmother (Gen I) has two normal X chromosomes (X<sup>a</sup>X<sup>a</sup>) and does not carry the dominant allele — she is unaffected.'},
+      p2_1:{gt:'XaY',status:'Unaffected',exp:'Son 1 (Gen II) inherited a Y from his affected father (not the X), and a normal X<sup>a</sup> from his mother. He is unaffected — fathers do not pass X to sons.'},
+      p2_3:{gt:'XaY',status:'Unaffected',exp:'Son 2 (Gen II) also inherited a Y from his affected father (not the X) and a normal X<sup>a</sup> from his mother — he is unaffected. Fathers in XLD cannot pass X to sons.'},
+      p2_2:{gt:'XAXa',status:'Affected',exp:'Daughter 1 (Gen II) received the dominant X<sup>A</sup> from her affected father Grandfather. All daughters of an affected father must inherit his X, so she is affected.'},
+      p2_4:{gt:'XAXa',status:'Affected',exp:'Daughter 2 (Gen II) also received the dominant X<sup>A</sup> from her affected father — all daughters of an affected XLD father are affected.'},
+      spouse:{gt:'XaY',status:'Unaffected',exp:'The Spouse is unaffected with a normal X chromosome (X<sup>a</sup>Y) — he carries no dominant allele.'},
+      p3_1:{gt:'XaY',status:'Unaffected',exp:'Grandson 1 (Gen III) inherited a Y from the Spouse and the normal X<sup>a</sup> from his affected mother Daughter 1 (50% chance). He is unaffected.'},
+      p3_3:{gt:'XAY',status:'Affected',exp:'Grandson 2 (Gen III) inherited a Y from the Spouse and the dominant X<sup>A</sup> from his affected mother Daughter 1 (50% chance). He expresses the trait.'},
+      p3_2:{gt:'XaXa',status:'Unaffected',exp:'Granddaughter 1 (Gen III) inherited X<sup>a</sup> from the Spouse and the normal X<sup>a</sup> from her affected mother (50% chance) — she is homozygous normal and unaffected.'},
+      p3_4:{gt:'XAXa',status:'Affected',exp:'Granddaughter 2 (Gen III) inherited X<sup>a</sup> from the Spouse and the dominant X<sup>A</sup> from her affected mother (50% chance) — she expresses the trait.'}
     }
   }
 };
@@ -720,10 +738,26 @@ const PERSON_META = {
 };
 
 
+
+
 // ═══════════════════════════════════════════
-// STATE
+// GENOTYPE FORMATTING  — superscript display
 // ═══════════════════════════════════════════
-let currentMode=null, timers=[], pulseFrames=[], speedMult=1, isPaused=false;
+// Converts plain gt strings → HTML with <sup> for X-linked alleles.
+// Rules:
+//   XA  → X<sup>A</sup>    (XLD dominant)
+//   XA  → X<sup>a</sup>    (XLD/XLR normal)
+//   Xa  → X<sup>a</sup>    (XLR recessive — render as lowercase a in sup)
+//   AA, Aa, aa → kept as-is (autosomal, already readable)
+//   Y   → Y
+function formatGT(gt) {
+  if (!gt) return '';
+  // Replace X followed by allele letter(s) with superscript version
+  // Handles: XA, XA, Xa (U+1D43)
+  return gt
+    .replace(/X([Aa])/g, (_, allele) => `X<sup>${allele}</sup>`);
+}
+let currentMode=null, lastRealMode='xlr', timers=[], pulseFrames=new Set(), speedMult=1, isPaused=false;
 
 // ═══════════════════════════════════════════
 // TIMERS
@@ -732,7 +766,7 @@ let pausedQueue=[];
 function later(fn,ms){ const id=setTimeout(()=>{ if(!isPaused){fn();}else{pausedQueue.push(fn);} }, Math.round(ms/speedMult)); timers.push(id); return id; }
 function clearAllTimers(){
   timers.forEach(clearTimeout); timers=[]; pausedQueue=[]; isPaused=false;
-  pulseFrames.forEach(cancelAnimationFrame); pulseFrames=[];
+  pulseFrames.forEach(cancelAnimationFrame); pulseFrames=new Set();
   const svg=document.getElementById('pedigree-lines');
   if(svg) svg.querySelectorAll('circle').forEach(c=>c.remove());
 }
@@ -845,11 +879,11 @@ function spawnPulse(line,dur){
   function step(now){
     const t=Math.min((now-t0)/dur,1);
     c.setAttribute('cx',x1+(x2-x1)*t);c.setAttribute('cy',y1+(y2-y1)*t);
-    if(t<1){ rafId=requestAnimationFrame(step); pulseFrames[pulseFrames.indexOf(rafId-1)]=rafId; }
-    else { c.remove(); pulseFrames=pulseFrames.filter(id=>id!==rafId); }
+    if(t<1){ rafId=requestAnimationFrame(step); pulseFrames.add(rafId); }
+    else { c.remove(); pulseFrames.delete(rafId); }
   }
   rafId=requestAnimationFrame(step);
-  pulseFrames.push(rafId);
+  pulseFrames.add(rafId);
 }
 
 function alignGenLabels(){
@@ -917,8 +951,11 @@ function resetAllPersons(){
     const el=document.getElementById(id); if(!el)return;
     const s=el.querySelector('.sym-shape');
     const g=el.querySelector('.sym-gender-icon');
-    if(s){s.style.fill='#2a2a28';s.style.stroke='#4a4a46';}
-    if(g){g.style.stroke='rgba(255,255,255,0.75)';}
+    if(s){
+      s.style.fill   = '#2a2a28';
+      s.style.stroke = '#4a4a46';
+    }
+    if(g){ g.style.stroke = 'rgba(255,255,255,0.75)'; }
     el.classList.remove('affected');el.style.filter='';el.style.color='';
     const cf=document.getElementById(id+'-carrier');if(cf)cf.setAttribute('fill','none');
   });
@@ -952,7 +989,9 @@ function lightUpPersons(ids,color,type){
       el.classList.add('affected');el.style.color=color;
     }
     else if(type==='carrier'){
-      const cf=document.getElementById(id+'-carrier');if(cf)cf.setAttribute('fill',color);if(s)s.style.stroke=color;
+      const cf=document.getElementById(id+'-carrier');
+      if(cf){ cf.setAttribute('fill',color); cf.setAttribute('stroke', color); cf.setAttribute('stroke-width','0'); }
+      if(s) s.style.stroke=color;
     }
   });
 }
@@ -1053,7 +1092,7 @@ function showTooltip(id,x,y){
   const gt=m.genotypes[id]; if(!gt)return;
   const tip=document.getElementById('gt-tooltip');
   const isAff=m.affected.includes(id),isCar=m.carriers.includes(id);
-  document.getElementById('tt-gt').textContent=gt.gt;
+  document.getElementById('tt-gt').innerHTML=formatGT(gt.gt);
   document.getElementById('tt-gt').style.color=isAff?m.color:isCar?m.color:'var(--text)';
   document.getElementById('tt-lbl').textContent=gt.status;
   tip.style.left=x+'px'; tip.style.top=y+'px'; tip.classList.add('vis');
@@ -1073,8 +1112,13 @@ function attachTooltips(){
 // INSPECT MODAL
 // ═══════════════════════════════════════════
 function inspectPerson(id){
-  if(!currentMode)return;
-  const m=MODES[currentMode],meta=PERSON_META[id],gt=m.genotypes[id];
+  if(!currentMode){
+    // CC panel open but no cross applied yet — silently ignore
+    return;
+  }
+  const m=MODES[currentMode];
+  if(!m)return;
+  const meta=PERSON_META[id], gt=m.genotypes?.[id];
   if(!gt||!meta)return;
   const isAff=m.affected.includes(id),isCar=m.carriers.includes(id),color=m.color;
   const srcEl=document.getElementById(id);
@@ -1082,15 +1126,15 @@ function inspectPerson(id){
   document.getElementById('modal-bar').style.background=`linear-gradient(90deg,${color},transparent)`;
   document.getElementById('modal-title').textContent=`${meta.label} · ${meta.name}`;
   document.getElementById('modal-title').style.color=isAff?color:'var(--text)';
-  const genNum = id.startsWith('p1') ? 'I' : id.startsWith('p3') ? 'III' : 'II'; // spouse & p2_x → II, p3_x → III
+  const genNum = id.startsWith('p1') ? 'I' : id.startsWith('p3') ? 'III' : 'II'; // p1_x → I, p3_x → III, p2_x + spouse → II
   document.getElementById('modal-sub').textContent=`${meta.sex} · Generation ${genNum}`;
   document.getElementById('modal-gt-box').style.borderColor=color;
-  document.getElementById('modal-gt-val').textContent=gt.gt;
+  document.getElementById('modal-gt-val').innerHTML=formatGT(gt.gt);
   document.getElementById('modal-gt-val').style.color=color;
   document.getElementById('modal-gt-status').textContent=gt.status;
   document.getElementById('modal-gt-status').style.color=isAff?color:isCar?color:'var(--text-dim)';
   document.getElementById('modal-exp-box').style.borderLeftColor=color;
-  document.getElementById('modal-exp-text').textContent=gt.exp;
+  document.getElementById('modal-exp-text').innerHTML=formatGT(gt.exp);
   document.getElementById('modal-overlay').classList.add('open');
 }
 function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
@@ -1111,7 +1155,7 @@ function setMode(modeKey){
     if(ccBtn)ccBtn.classList.remove('active');
   }
   clearAllTimers();resetAllPersons();resetLineColors();resetGenLabels();
-  currentMode=modeKey;isPaused=false;
+  currentMode=modeKey; lastRealMode=modeKey; isPaused=false;
   document.querySelectorAll('.btn:not(.btn-pause):not(.btn-reset)').forEach(b=>b.classList.remove('active'));
   const ab=document.getElementById('btn-'+modeKey);if(ab)ab.classList.add('active');
   document.getElementById('btn-pause').innerHTML='⏸ Pause<span class="sh">Key: P</span>';
@@ -1134,12 +1178,12 @@ const CC_GENOTYPES = {
     female: [{gt:'AA',status:'Unaffected',alleles:['A','A']}, {gt:'Aa',status:'Carrier',alleles:['A','a']}, {gt:'aa',status:'Affected',alleles:['a','a']}]
   },
   xlr: {
-    male:   [{gt:'X\u1D00Y',status:'Unaffected',alleles:['X\u1D00','Y']}, {gt:'X\u1D43Y',status:'Affected',alleles:['X\u1D43','Y']}],
-    female: [{gt:'X\u1D00X\u1D00',status:'Unaffected',alleles:['X\u1D00','X\u1D00']}, {gt:'X\u1D00X\u1D43',status:'Carrier',alleles:['X\u1D00','X\u1D43']}, {gt:'X\u1D43X\u1D43',status:'Affected',alleles:['X\u1D43','X\u1D43']}]
+    male:   [{gt:'XAY',status:'Unaffected',alleles:['XA','Y']}, {gt:'XaY',status:'Affected',alleles:['Xa','Y']}],
+    female: [{gt:'XAXA',status:'Unaffected',alleles:['XA','XA']}, {gt:'XAXa',status:'Carrier',alleles:['XA','Xa']}, {gt:'XaXa',status:'Affected',alleles:['Xa','Xa']}]
   },
   xld: {
-    male:   [{gt:'X\u1D2CY',status:'Affected',alleles:['X\u1D2C','Y']}, {gt:'X\u1D00Y',status:'Unaffected',alleles:['X\u1D00','Y']}],
-    female: [{gt:'X\u1D2CX\u1D2C',status:'Affected',alleles:['X\u1D2C','X\u1D2C']}, {gt:'X\u1D2CX\u1D00',status:'Affected',alleles:['X\u1D2C','X\u1D00']}, {gt:'X\u1D00X\u1D00',status:'Unaffected',alleles:['X\u1D00','X\u1D00']}]
+    male:   [{gt:'XAY',status:'Affected',alleles:['XA','Y']}, {gt:'XaY',status:'Unaffected',alleles:['Xa','Y']}],
+    female: [{gt:'XAXA',status:'Affected',alleles:['XA','XA']}, {gt:'XAXa',status:'Affected',alleles:['XA','Xa']}, {gt:'XaXa',status:'Unaffected',alleles:['Xa','Xa']}]
   }
 };
 
@@ -1173,11 +1217,11 @@ function ccPhenotype(a1, a2, mode) {
   const hasMaleY = a1==='Y'||a2==='Y';
   const xAlleles = [a1,a2].filter(a=>a!=='Y');
   if (hasMaleY) {
-    if (mode === 'xlr') return xAlleles.includes('X\u1D43') ? 'affected' : 'unaffected';
-    if (mode === 'xld') return xAlleles.includes('X\u1D2C') ? 'affected' : 'unaffected';
+    if (mode === 'xlr') return xAlleles.includes('Xa') ? 'affected' : 'unaffected';
+    if (mode === 'xld') return xAlleles.includes('XA') ? 'affected' : 'unaffected';
   } else {
-    if (mode === 'xlr') return (xAlleles[0]==='X\u1D43'&&xAlleles[1]==='X\u1D43') ? 'affected' : xAlleles.includes('X\u1D43') ? 'carrier' : 'unaffected';
-    if (mode === 'xld') return xAlleles.includes('X\u1D2C') ? 'affected' : 'unaffected';
+    if (mode === 'xlr') return (xAlleles[0]==='Xa'&&xAlleles[1]==='Xa') ? 'affected' : xAlleles.includes('Xa') ? 'carrier' : 'unaffected';
+    if (mode === 'xld') return xAlleles.includes('XA') ? 'affected' : 'unaffected';
   }
   return 'unaffected';
 }
@@ -1190,12 +1234,12 @@ function sortAlleles(a1, a2, mode) {
     return [a1, a2];
   }
   if (mode === 'xld') {
-    const isDom = a => a.includes('\u1D2C');
+    const isDom = a => a === 'XA';
     if (isDom(a2) && !isDom(a1)) return [a2, a1];
     return [a1, a2];
   }
   if (mode === 'xlr') {
-    const isNormal = a => a.includes('\u1D00');
+    const isNormal = a => a === 'XA';
     if (isNormal(a2) && !isNormal(a1)) return [a2, a1];
     return [a1, a2];
   }
@@ -1216,7 +1260,28 @@ function toggleCustomCross() {
   const btn = document.getElementById('btn-cc');
   const isOpen = panel.classList.toggle('open');
   btn.classList.toggle('active', isOpen);
-  if (isOpen) onCCModeChange();
+  if (isOpen) {
+    // Clear all other mode button outlines immediately
+    document.querySelectorAll('.btn:not(.btn-cc):not(.btn-pause):not(.btn-reset)')
+      .forEach(b => b.classList.remove('active'));
+    // Stop any running simulation and blank the chart
+    clearAllTimers();
+    currentMode = null;
+    isPaused = false;
+    document.getElementById('btn-pause').innerHTML = '⏸ Pause<span class="sh">Key: P</span>';
+    resetAllPersons();
+    resetLineColors();
+    // Hide Re-roll — no cross applied yet
+    const rerollBtn = document.getElementById('cc-reroll-btn');
+    if (rerollBtn) rerollBtn.style.display = 'none';
+    ccState._rollSeed = null;
+    onCCModeChange();
+  } else {
+    // Panel closing — if CC was never applied (no currentMode), restore last real mode
+    if (currentMode !== 'cc') {
+      setMode(lastRealMode);
+    }
+  }
 }
 
 function syncCrossModes(changedParent) {
@@ -1232,10 +1297,13 @@ function onCCModeChange() {
   ccState.fatherGT = null;
   ccState.motherGT = null;
   ccState.spouseGT = null;
-  ccState.lastResult = null; // prevent Apply using stale cross from previous mode
+  ccState.lastResult = null;
+  ccState._rollSeed = null;
+  // Hide Re-roll — cross config changed, previous roll no longer valid
+  const rerollBtn = document.getElementById('cc-reroll-btn');
+  if (rerollBtn) rerollBtn.style.display = 'none';
   renderCCGenotypeButtons('cc-gt-father', CC_GENOTYPES[ccState.fatherMode].male, 'father');
   renderCCGenotypeButtons('cc-gt-mother', CC_GENOTYPES[ccState.motherMode].female, 'mother');
-  // CC-1 fix: render spouse selector using same mode's male pool
   renderCCGenotypeButtons('cc-gt-spouse', CC_GENOTYPES[ccState.fatherMode].male, 'spouse');
   document.getElementById('cc-result-area').style.display = 'none';
 }
@@ -1246,7 +1314,7 @@ function renderCCGenotypeButtons(containerId, genotypes, parent) {
   genotypes.forEach((g, i) => {
     const btn = document.createElement('button');
     btn.className = 'cc-gt-btn';
-    btn.innerHTML = `${g.gt}<span style="display:block;font-size:0.5rem;">${g.status}</span>`;
+    btn.innerHTML = `${formatGT(g.gt)}<span style="display:block;font-size:0.5rem;">${g.status}</span>`;
     btn.title = g.status;
     btn.onclick = () => selectCCGenotype(parent, i, g, btn);
     el.appendChild(btn);
@@ -1298,7 +1366,7 @@ function findGenotypeEntry(pool, gt) {
   const byJoin = pool.find(g => g.alleles.join('') === gt);
   if (byJoin) return byJoin;
   // 3. Sort by allele array (not by character) to handle reversed order
-  //    e.g. "XᵃXᴬ" should match entry with alleles ["Xᴬ","Xᵃ"]
+  //    e.g. "XaXA" should match entry with alleles ["XA","Xa"]
   const bySortedAlleles = pool.find(g => {
     const sortedEntry = [...g.alleles].sort().join('');
     // Reconstruct candidate alleles from gt using entry's allele length as unit size
@@ -1386,8 +1454,8 @@ function renderPunnett(fa, ma, combos) {
   ma.forEach(m => {
     const th = document.createElement('th');
     th.className = 'cc-punnett-cell header';
-    th.textContent = `♀ ${m}`;
-    th.setAttribute('scope', 'col'); // CC-9 fix
+    th.innerHTML = `♀ ${formatGT(m)}`;
+    th.setAttribute('scope', 'col');
     headerRow.appendChild(th);
   });
 
@@ -1396,15 +1464,15 @@ function renderPunnett(fa, ma, combos) {
     const row = tbody.insertRow();
     const rowHeader = document.createElement('th');
     rowHeader.className = 'cc-punnett-cell header';
-    rowHeader.textContent = `♂ ${f}`;
-    rowHeader.setAttribute('scope', 'row'); // CC-9 fix
+    rowHeader.innerHTML = `♂ ${formatGT(f)}`;
+    rowHeader.setAttribute('scope', 'row');
     row.appendChild(rowHeader);
     for (let mi = 0; mi < ma.length; mi++) {
       const idx = fi * ma.length + mi;
       const c = combos[idx];
       const td = row.insertCell();
       td.className = 'cc-punnett-cell ' + phenoClass(c.pheno);
-      td.textContent = c.gt;
+      td.innerHTML = formatGT(c.gt);
       td.title = c.pheno;
     }
   });
@@ -1418,7 +1486,7 @@ function renderCCProbs(results, containerId) {
     const row = document.createElement('div');
     row.className = 'cc-prob-row';
     const barClass = r.pheno === 'affected' ? 'cc-prob-bar' : r.pheno === 'carrier' ? 'cc-prob-bar carrier-bar' : 'cc-prob-bar unaffected-bar';
-    row.innerHTML = `<span class="cc-prob-lbl">${r.gt} <span style="opacity:.55;font-size:.6rem">(${r.pheno})</span></span><div class="cc-prob-bar-wrap"><div class="${barClass}" data-pct="${r.pct}" style="width:0%"></div></div><span class="cc-prob-pct">${r.pct}%</span>`;
+    row.innerHTML = `<span class="cc-prob-lbl">${formatGT(r.gt)} <span style="opacity:.55;font-size:.6rem">(${r.pheno})</span></span><div class="cc-prob-bar-wrap"><div class="${barClass}" data-pct="${r.pct}" style="width:0%"></div></div><span class="cc-prob-pct">${r.pct}%</span>`;
     el.appendChild(row);
   });
   // CC-8 fix: store rAF id so it can be cancelled on re-render
@@ -1536,7 +1604,7 @@ function applyCCToChart(seed = null) {
   if (sGT.status === 'Carrier')  carriers.push('spouse');
 
   // CC-3 fix: use robust findGenotypeEntry
-  // For X-linked, the sampled gt (e.g. "XᴬXᵃ") must match female pool
+  // For X-linked, the sampled gt (e.g. "XAXa") must match female pool
   const p2_2GTEntry = genotypes.p2_2;
   const p2_2Entry = findGenotypeEntry(CC_GENOTYPES[mode].female, p2_2GTEntry ? p2_2GTEntry.gt : '');
   const spouseEntry = findGenotypeEntry(CC_GENOTYPES[mode].male, sGT.gt);
